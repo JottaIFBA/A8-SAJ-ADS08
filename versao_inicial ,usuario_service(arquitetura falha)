@@ -1,0 +1,27 @@
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
+
+    private RestTemplate restTemplate = new RestTemplate();
+
+    @PostMapping
+    public String criarPedido(@RequestBody String pedido) {
+        // Sem fallback ou tratamento de falha
+        String respostaPagamento = restTemplate.postForObject(
+                "http://localhost:8082/payments", pedido, String.class);
+        return "Pedido criado! Resultado pagamento: " + respostaPagamento;
+    }
+}
+@RestController
+@RequestMapping("/payments")
+public class PaymentController {
+
+    private Map<String, String> pedidos = new HashMap<>();
+
+    @PostMapping
+    public String processarPagamento(@RequestBody String pedido) {
+        // Violando SRP: faz pedido + pagamento
+        pedidos.put(pedido, "Pago");
+        return "Pagamento confirmado para: " + pedido;
+    }
+}
