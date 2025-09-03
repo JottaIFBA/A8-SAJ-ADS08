@@ -1,0 +1,26 @@
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
+
+    private final PaymentClient paymentClient;
+
+    public OrderController(PaymentClient paymentClient) {
+        this.paymentClient = paymentClient;
+    }
+
+    @PostMapping
+    @Bulkhead(name = "orderService", type = Bulkhead.Type.THREADPOOL)
+    @CircuitBreaker(name = "orderService", fallbackMethod = "fallbackPagamento")
+    public String criarPedido(@RequestBody String pedido) {
+        return paymentClient.processarPagamento(pedido);
+    }
+
+    public String fallbackPagamento(String pedido, Throwable ex) {
+        return "Pagamento em fila. Tentaremos novamente. Erro: " + ex.getMessage();
+    }
+}
+@FeignClient(name = "payment-service")
+public interface PaymentClient {
+    @PostMapping("/payments")
+    String processarPagamento(@RequestBody String pedido);
+}
